@@ -13,3 +13,7 @@ python Douban_robot\DbBot_scheduler.py -run -m 2
 
 效果1（neo4j browser）：  
 ![image](https://github.com/lusixing/Douban-book-info-crawl-and-visualize/blob/master/images/graph1.png)
+
+效果2（使用flask+force-graph进行前端查询和展示）：   
+![image](https://github.com/lusixing/Douban-book-info-crawl-and-visualize/blob/master/images/graph2.png)
+

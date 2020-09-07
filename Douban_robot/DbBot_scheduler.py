@@ -30,7 +30,6 @@ if __name__ == '__main__':
         robot1 = DoubanBot(task_queue1,db_config,proxy_list=proxy_list,clear=args.clear)
         if int(args.mode) == 1:
             task_queue1.put(args.bid)
-            print(task_queue1.unfinished_tasks)
         elif int(args.mode) == 2:
             robot1.enqueue_boundary_books()
         robot1.run()

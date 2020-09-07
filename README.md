@@ -4,7 +4,7 @@
 爬虫使用方法：  
 DbBot_scheduler.py [-h] [-b BID] [-run] [-m MODE] [-clr] [-p]  
 命令行参数含义： -run: 启动爬虫，-b:书籍在豆瓣上的ID，-m 爬虫运行模式，1代表从某本书开始爬取，2代表从边缘节点扩充， -clr 清空数据库， -p 使用代理服务器  
-使用方法举例： 
+使用方法举例：   
 python Douban_robot\DbBot_scheduler.py -run -m 1 -b 21979017 -p  
 从ID为21979017的书开始进行广度优先爬取，并使用代理  
 

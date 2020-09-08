@@ -1,5 +1,5 @@
 # Douban-book-info-crawl-and-visualize
-豆瓣图书数据爬取，使用neo4j图数据库进行储存，并使用flask进行可视化展示，前端视图可视化使用了基于webgl的 [force-graph](https://github.com/vasturiano/3d-force-graph) 库  
+基于python bs4的豆瓣图书数据爬取，使用neo4j图数据库进行储存，并使用flask进行可视化展示，前端视图可视化使用了基于webgl的 [force-graph](https://github.com/vasturiano/3d-force-graph) 库  
 
 爬虫使用方法：  
 DbBot_scheduler.py [-h] [-b BID] [-run] [-m MODE] [-clr] [-p]  

@@ -1,0 +1,131 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}Graph_vis_test{% endblock %}
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">图书数据可视化</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+            </ul>
+            <ul class="nav navbar-nav">
+                <li><a href="/a">随便看看</a></li>
+            </ul>
+            <ul class="nav navbar-nav">
+                <li><a href="/b">查询书籍</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {{ wtf.quick_form(form) }}
+    {% if name %}
+    <head>
+        <style> body { margin: 0; } </style>
+        <script src="{{ url_for('static', filename='js//force-graph.js') }}"></script>
+         <script src="{{ url_for('static', filename='js//neo4j-web.js') }}"></script>
+         <script src="{{ url_for('static', filename='js//d3-quadtree.min.js') }}"></script>
+         <script src="{{ url_for('static', filename='js//d3-force.min.js') }}"></script>
+    </head>
+
+    <body>
+<div id="3d-graph"></div>
+
+<script  type="text/javascript">
+    let gData = '{{ gData| safe }}';
+    //alert(gData);
+    //data = JSON.parse(gData);
+    const data = eval('(' + gData + ')');
+    for( j = 0; j < data.nodes.length; j++){
+        data.nodes[j].book_data = JSON.stringify(data.nodes[j].book_data);
+    }
+
+    const NODE_R = 6;
+
+    const Graph = ForceGraph()(document.getElementById('3d-graph')).graphData(data)
+        .nodeId('id')
+        .nodeLabel('book_data')
+        .nodeRelSize(NODE_R)
+        .linkCanvasObjectMode(() => 'before')
+        .linkCanvasObject((link, ctx) => {
+            const MAX_FONT_SIZE = 2;
+            const LABEL_NODE_MARGIN = Graph.nodeRelSize() * 1.5;
+
+            const start = link.source;
+            const end = link.target;
+
+            // ignore unbound links
+            if (typeof start !== 'object' || typeof end !== 'object') return;
+
+            // calculate label positioning
+            const textPos = Object.assign(...['x', 'y'].map(c => ({
+                [c]: start[c] + (end[c] - start[c]) / 2 // calc middle point
+            })));
+
+            const relLink = { x: end.x - start.x, y: end.y - start.y };
+            const maxTextLength = Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
+
+            let textAngle =0;
+            //const label = `${link.source.id} > ${link.target.id}`;
+            let label = ``;
+
+            label = (start.x>=end.x)? `readers_like >>>`:`<<<readers_like`;
+
+            // estimate fontSize to fit in link length
+            ctx.font = '1px Sans-Serif';
+            const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / ctx.measureText(label).width);
+            ctx.font = `${fontSize}px Sans-Serif`;
+            const textWidth = ctx.measureText(label).width;
+            const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+            // draw text label (with background rect)
+            ctx.save();
+            ctx.translate(textPos.x, textPos.y);
+            ctx.rotate(textAngle);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillRect(- bckgDimensions[0] / 2, - bckgDimensions[1] / 2, ...bckgDimensions);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'darkgrey';
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+        })
+
+        .nodeCanvasObjectMode(node => 'after')
+        .nodeCanvasObject((node, ctx, globalScale) => {
+
+            ctx.fillStyle = 'rgba(85, 75, 85, 0.8)';
+            ctx.font = '5px Sans-Serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.id, node.x, node.y);
+
+        })
+        .onNodeClick(node => {
+            const bid = JSON.parse(node.book_data)["bid"]
+            window.open("https://book.douban.com/subject/"+bid);
+        })
+        .linkWidth(link => 3).nodeColor(node=>{return node.id==='{{name}}'?'rgba(255, 105, 055, 0.8)':'rgba(255, 155, 055, 0.8)'}) ;
+
+</script>
+</body>
+    {% endif %}
+</div>
+
+
+{% endblock %}

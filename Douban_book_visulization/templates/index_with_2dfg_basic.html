@@ -1,0 +1,63 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}图书数据可视化{% endblock %}
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">图书数据可视化</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+            </ul>
+            <ul class="nav navbar-nav">
+                <li><a href="/a">随便看看</a></li>
+            </ul>
+            <ul class="nav navbar-nav">
+                <li><a href="/b">查询书籍</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<head>
+    <style> body { margin: 0; } </style>
+
+<!--    <script src="//unpkg.com/force-graph"></script>-->
+<!--    <script src="..//force-graph.js"></script>-->
+<script src="{{ url_for('static', filename='js//force-graph.js') }}"></script>
+
+</head>
+
+<body>
+<div id="graph"></div>
+
+<script>
+    // Random tree
+    const N = 300;
+    const gData = {
+        nodes: [...Array(N).keys()].map(i => ({ id: i })),
+        links: [...Array(N).keys()]
+            .filter(id => id)
+            .map(id => ({
+                source: id,
+                target: Math.round(Math.random() * (id-1))
+            }))
+    };
+
+    const Graph = ForceGraph()
+    (document.getElementById('graph'))
+        .linkDirectionalParticles(2)
+        .graphData(gData);
+</script>
+</body>
+{% endblock %}

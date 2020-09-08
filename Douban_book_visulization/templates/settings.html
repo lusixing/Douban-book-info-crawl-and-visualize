@@ -1,0 +1,11 @@
+<html>
+    <head>
+         <script type="text/javascript">
+            var username = {{ data.username }}
+            var site = {{ data.site }}
+
+            alert(username)
+        </script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js//app.js') }}"></script>
+    </head>
+</html>

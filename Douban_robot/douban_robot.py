@@ -2,61 +2,78 @@ import urllib.request
 import re
 from bs4 import BeautifulSoup
 from gdb_broker import neo4j_broker
+from csv_dealer import CsvDealer
 import traceback
 import random
+import time
+import os
+import socket
+import socks
+from pathlib import Path
 
 class Task2:
     def __init__(self, book_info, books_rec_ids, books_rec_names):
-        self.book_indo = book_info
+        self.book_info = book_info
         self.books_rec_ids = books_rec_ids
         self.books_rec_names = books_rec_names
 
-class DoubanBot:
-    def __init__(self, task_queue1, db_config,proxy_list=None,clear=False):
-        self.task_queue1 = task_queue1
-        self.proxy_list = proxy_list
-        db_config = db_config
-        self.db_connection = neo4j_broker(db_config, task_queue1)
-        if clear:
-            self.db_connection.clear_db()
 
-    def run(self, max_crawl_pages=50):
+class DoubanBot:
+    def __init__(self, task_queue1, db_config, proxy_list_sock5=None, clear=False, use_db=True):
+        self.task_queue1 = task_queue1
+        self.proxy_list_sock5 = proxy_list_sock5
+        self.use_db = use_db
+        if use_db == 1:
+            self.db_connection = neo4j_broker(db_config, task_queue1)
+            if clear:
+                self.db_connection.clear_db()
+        else:
+            #path1 = os.path.dirname(os.getcwd())
+            path1 = Path(__file__).parent.parent
+            data_folder = os.path.join(path1, "csv_data")
+            book_data_file = "book_data.csv"
+            book_rel_file = "book_rel.csv"
+            self.csv_dealer = CsvDealer(data_folder, book_data_file, book_rel_file, task_queue1)
+
+        if self.proxy_list_sock5 is not None:   #使用代理
+            proxy = random.choice(self.proxy_list_sock5)
+            socks.set_default_proxy(socks.SOCKS5, proxy["host"], proxy["port"])
+            socket.socket = socks.socksocket
+
+    def run(self, max_crawl_pages=100):
         crawled_pages = 0
-        while crawled_pages <= max_crawl_pages or self.task_queue1.unfinished_tasks>1:
+        while crawled_pages <= max_crawl_pages and self.task_queue1.unfinished_tasks>=1:
             task1 = self.task_queue1.get()
-            if not self.db_connection.book_exists_by_bid(task1) or self.db_connection.is_boundary_book_by_bid(task1):
+            if (self.use_db == 0) or (not self.db_connection.book_exists_by_bid(task1) or self.db_connection.is_boundary_book_by_bid(task1)):
                 try:
                     task2 = self.crawl_doubanbook_single_page(task1)
-                    self.db_connection.add_new_book(task2)
+                    if self.use_db == 1:
+                        self.db_connection.add_new_book(task2)
+                    else:
+                        self.csv_dealer.insert_doubanbook_csv(task2)
+                        pass
                 except Exception as inst:
                     print(type(inst))
-                    print("error occured when crawling book with id:{0}".format(task1))
+                    print("error occurred when crawling book with id:{0}".format(task1))
                     traceback.print_exc()
                 else:
                     crawled_pages += 1
                     print("successfully crawled book with id:{0}".format(task1))
+                    time.sleep(1)
+        if self.use_db == 0 and len(self.csv_dealer.buffer1)>0:
+            self.csv_dealer.write_from_buffer()
         print("mission completed")
 
     def crawl_doubanbook_single_page(self, book_id):
         url = "https://book.douban.com/subject/" + str(book_id)
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1;WOW64) AppleWebKit/537.36 (KHTML,like GeCKO)\
-             Chrome/45.0.2454.85 Safari/537.36 115Broswer/6.0.3',
+            'User-Agent': 'Mozilla/4.0 (Windows NT 6.1;WOW64) AppleWebKit/557.36 (KHTML,like GeCKO)\
+             Chrome/45.0.2354.85 Safari/537.36 115Broswer/6.0.3',
             'Connection': 'keep-alive'}
 
-        if self.proxy_list is not None:   #使用代理
-            proxy = random.choice(self.proxy_list)
-
-            httpproxy_handler = urllib.request.ProxyHandler(proxy)  # 创建代理handler
-            opener = urllib.request.build_opener(httpproxy_handler)
-            request = urllib.request.Request(url, headers=headers)
-            response = opener.open(request)
-
-            response_html = response.read().decode('utf-8')
-        else:
-            req = urllib.request.Request(url, headers=headers)
-            response_html = urllib.request.urlopen(req)
-            response_html.encoding = "utf-8"
+        req = urllib.request.Request(url, headers=headers)
+        response_html = urllib.request.urlopen(req)
+        response_html.encoding = "utf-8"
 
         bsobj = BeautifulSoup(response_html,features="lxml")
         char_to_remove = ["\n", " ", "\xa0"]
@@ -96,7 +113,7 @@ class DoubanBot:
                 b_info["publisher"] = data1.groupdict()["Pub"]
                 # print(data1.groupdict()["Pub"])
             if data2 is not None:
-                b_info["ISBN"] = data2.groupdict()["ISBN"]
+                b_info["ISBN"] = str(data2.groupdict()["ISBN"])
             if data3 is not None:
                 b_info["pages"] = data3.groupdict()["pages"]
             if data4 is not None:

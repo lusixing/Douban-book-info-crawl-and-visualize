@@ -107,15 +107,14 @@
 
         .nodeCanvasObjectMode(node => 'after')
         .nodeCanvasObject((node, ctx, globalScale) => {
-            //ctx.beginPath();
-            //ctx.arc(node.x, node.y, node.radius*1.1, 0, 2 * Math.PI, false);
-            //ctx.fill();
 
             ctx.fillStyle = 'rgba(85, 75, 85, 0.8)';
             ctx.font = '5px Sans-Serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.id, node.x, node.y);
+            //ctx.fillText(node.id, node.x, node.y);
+            const node_name = JSON.parse(node.book_data)["name"];
+            ctx.fillText(node_name, node.x, node.y);
 
         })
         .onNodeClick(node => {

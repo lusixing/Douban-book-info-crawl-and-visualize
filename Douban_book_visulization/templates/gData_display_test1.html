@@ -33,7 +33,8 @@
 <div class="container">
     {{ wtf.quick_form(form) }}
     {% if name %}
-    <head>
+        {% if name!='NSP' %}
+            <head>
         <style> body { margin: 0; } </style>
         <script src="{{ url_for('static', filename='js//force-graph.js') }}"></script>
          <script src="{{ url_for('static', filename='js//neo4j-web.js') }}"></script>
@@ -41,7 +42,7 @@
          <script src="{{ url_for('static', filename='js//d3-force.min.js') }}"></script>
     </head>
 
-    <body>
+             <body>
 <div id="3d-graph"></div>
 
 <script  type="text/javascript">
@@ -79,7 +80,6 @@
             const maxTextLength = Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
 
             let textAngle =0;
-            //const label = `${link.source.id} > ${link.target.id}`;
             let label = ``;
 
             label = (start.x>=end.x)? `readers_like >>>`:`<<<readers_like`;
@@ -113,17 +113,21 @@
             ctx.font = '5px Sans-Serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.id, node.x, node.y);
+            const node_name = JSON.parse(node.book_data)["name"];
+            ctx.fillText(node_name, node.x, node.y);
 
         })
         .onNodeClick(node => {
             const bid = JSON.parse(node.book_data)["bid"]
             window.open("https://book.douban.com/subject/"+bid);
         })
-        .linkWidth(link => 3).nodeColor(node=>{return node.id==='{{name}}'?'rgba(255, 105, 055, 0.8)':'rgba(255, 155, 055, 0.8)'}) ;
+        .linkWidth(link => 3).nodeColor(node=>{return JSON.parse(node.book_data)["name"]==='{{name}}'?'rgba(255, 105, 055, 0.8)':'rgba(255, 155, 055, 0.8)'}) ;
 
 </script>
 </body>
+        {% else %}
+    <script  type="text/javascript">alert("CSV模式不支持此功能");</script>
+        {% endif %}
     {% endif %}
 </div>
 
